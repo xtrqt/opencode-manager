@@ -23,9 +23,8 @@ describe('DockerOrchestrator', () => {
       devcontainerTemplate: 'minimal',
     })
 
-    expect(compose).toContain('context: /workspace/devcontainers/minimal')
-    expect(compose).toContain('- /workspace/repos:/workspace/repos')
-    expect(compose).toContain('- /workspace/repos:/workspace-root/repos')
+    expect(compose).toContain('context: /ocm/devcontainers/minimal')
+    expect(compose).toContain('- /ocm:/ocm')
   })
 
   it('should use image when imageId provided', async () => {

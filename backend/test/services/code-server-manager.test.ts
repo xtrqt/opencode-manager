@@ -77,7 +77,7 @@ describe('CodeServerManager', () => {
     )
     expect(writeFile).toHaveBeenCalledWith(
       '/workspace/sessions/session-1/code-server/start.sh',
-      expect.stringContaining('code-server --config /workspace/code-server/config.yaml /workspace'),
+      expect.stringContaining('code-server --config /ocm/workspace/session-1/code-server/config.yaml /ocm/workspace/session-1'),
       'utf-8'
     )
     expect(chmod).toHaveBeenCalledWith('/workspace/sessions/session-1/code-server/start.sh', 0o755)

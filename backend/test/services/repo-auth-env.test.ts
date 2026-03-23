@@ -6,6 +6,7 @@ const executeCommand = vi.fn()
 const ensureDirectoryExists = vi.fn()
 
 const getRepoByUrlAndBranch = vi.fn()
+const getRepoByLocalPath = vi.fn()
 const createRepo = vi.fn()
 const updateRepoStatus = vi.fn()
 const deleteRepo = vi.fn()
@@ -20,6 +21,7 @@ vi.mock('../../src/services/file-operations', () => ({
 
 vi.mock('../../src/db/queries', () => ({
   getRepoByUrlAndBranch,
+  getRepoByLocalPath,
   createRepo,
   updateRepoStatus,
   deleteRepo,
@@ -67,6 +69,7 @@ describe('repoService.cloneRepo auth env', () => {
     const repoUrl = 'https://github.com/acme/forge.git'
 
     getRepoByUrlAndBranch.mockReturnValue(null)
+    getRepoByLocalPath.mockReturnValue(null)
     createRepo.mockReturnValue({
       id: 1,
       repoUrl,
@@ -83,9 +86,8 @@ describe('repoService.cloneRepo auth env', () => {
 
     await cloneRepo(database, mockGitAuthService, repoUrl)
 
-    expect(executeCommand).toHaveBeenNthCalledWith(
-      3,
-      ['git', 'clone', 'https://github.com/acme/forge', 'forge'],
+    expect(executeCommand).toHaveBeenCalledWith(
+      ['git', 'clone', '--bare', 'https://github.com/acme/forge', 'forge'],
       expect.objectContaining({ cwd: getReposPath(), env: mockEnv })
     )
 

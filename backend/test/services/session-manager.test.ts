@@ -108,7 +108,7 @@ describe('SessionManager', () => {
       const session = await sessionManager.createSession(input)
 
       expect(session.name).toBe('my-test-session')
-      expect(session.status).toBe('creating')
+      expect(session.status).toBe('stopped')
       expect(session.sessionPath).toContain('my-test-session')
     })
 
@@ -351,11 +351,14 @@ describe('SessionManager', () => {
           sessionName: 'start-test',
         })
       )
-      expect(dockerOrchestrator.waitForContainersHealthy).toHaveBeenCalledWith([
-        'start-test-dind',
-        'start-test-opencode',
-        'start-test-code',
-      ])
+      expect(dockerOrchestrator.waitForContainersHealthy).toHaveBeenCalledWith(
+        [
+          'start-test-dind',
+          'start-test-opencode',
+          'start-test-code',
+        ],
+        { timeoutMs: 120000 }
+      )
       expect(traefikManager.syncRoutes).toHaveBeenCalled()
     })
 

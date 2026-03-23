@@ -10,6 +10,13 @@ vi.mock('../../src/utils/process', () => ({
 
 vi.mock('@opencode-manager/shared/config/env', () => ({
   getReposPath: () => '/workspace/repos',
+  getWorkspacesPath: () => '/workspace/workspace',
+  getSharedPath: () => '/workspace/shared',
+  getContainerWorkspacesPath: () => '/ocm/workspace',
+}))
+
+vi.mock('fs', () => ({
+  existsSync: () => false,
 }))
 
 vi.mock('fs/promises', () => ({
@@ -59,22 +66,23 @@ describe('WorktreeManager', () => {
 
     const mapping = await manager.createWorktreeForSession(repo, 'session-1', 'feature')
 
-    expect(execCommand).toHaveBeenCalledWith([
-      'git', '-C', '/workspace/repos/repo-1',
-      'worktree', 'add', 'session-1', 'feature',
-    ])
+    expect(execCommand).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        'git',
+        '--git-dir',
+        '/workspace/repos/repo-1',
+        'worktree',
+        'add',
+        '/workspace/workspace/session-1/repo-1',
+      ])
+    )
     expect(execCommand).toHaveBeenCalledWith([
       'worktree-link',
       '--source', '/workspace/repos/repo-1',
-      '--target', '/workspace/repos/repo-1/session-1',
+      '--target', '/workspace/workspace/session-1/repo-1',
       '--config', '/workspace/repos/repo-1/.worktreelinks.session-1',
     ])
-    expect(mkdir).toHaveBeenCalledWith('/workspace/sessions/session-1', { recursive: true })
-    expect(symlink).toHaveBeenCalledWith(
-      '/workspace/repos/repo-1/session-1',
-      '/workspace/sessions/session-1/repo-1',
-      'dir'
-    )
+    expect(mkdir).toHaveBeenCalledWith('/workspace/workspace/session-1', { recursive: true })
     expect(mapping.repoId).toBe(1)
     expect(mapping.branch).toBe('feature')
   })
@@ -101,10 +109,18 @@ describe('WorktreeManager', () => {
 
     await manager.createWorktreeForSession(repo, 'session-2', 'new-branch')
 
-    expect(execCommand).toHaveBeenCalledWith([
-      'git', '-C', '/workspace/repos/repo-1',
-      'worktree', 'add', '-b', 'new-branch', 'session-2',
-    ])
+    expect(execCommand).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        'git',
+        '--git-dir',
+        '/workspace/repos/repo-1',
+        'worktree',
+        'add',
+        '-b',
+        'new-branch',
+        '/workspace/workspace/session-2/repo-1',
+      ])
+    )
   })
 
   it('should remove worktree and shared directory', async () => {

@@ -65,7 +65,7 @@ describe('initLocalRepo', () => {
     
     const result = await initLocalRepo(database, mockGitAuthService, localPath)
 
-    expect(executeCommand).toHaveBeenCalledWith(['git', 'init'], expect.any(Object))
+    expect(executeCommand).toHaveBeenCalledWith(['git', 'init', '--bare'], expect.any(Object))
     expect(ensureDirectoryExists).toHaveBeenCalledWith(expect.stringContaining('my-new-repo'))
     expect(updateRepoStatus).toHaveBeenCalledWith(database, 1, 'ready')
     expect(result.cloneStatus).toBe('ready')
@@ -100,7 +100,7 @@ describe('initLocalRepo', () => {
 
     expect(executeCommand).toHaveBeenCalledWith(['test', '-d', '/Users/test/existing-repo'], { silent: true })
     expect(executeCommand).toHaveBeenCalledWith(['git', '-C', '/Users/test/existing-repo', 'rev-parse', '--git-dir'], expect.objectContaining({ silent: true }))
-    expect(executeCommand).toHaveBeenCalledWith(['git', 'clone', '--local', '/Users/test/existing-repo', 'existing-repo'], expect.objectContaining({ cwd: getReposPath() }))
+    expect(executeCommand).toHaveBeenCalledWith(['git', 'clone', '--bare', '--local', '/Users/test/existing-repo', 'existing-repo'], expect.objectContaining({ cwd: getReposPath() }))
     expect(updateRepoStatus).toHaveBeenCalledWith(database, 2, 'ready')
     expect(result.cloneStatus).toBe('ready')
     expect(result.localPath).toBe('existing-repo')
@@ -186,8 +186,8 @@ describe('initLocalRepo', () => {
 
     const result = await initLocalRepo(database, mockGitAuthService, localPath, branch)
 
-    expect(executeCommand).toHaveBeenCalledWith(['git', 'init'], expect.any(Object))
-    expect(executeCommand).toHaveBeenCalledWith(['git', '-C', expect.any(String), 'checkout', '-b', 'develop'])
+    expect(executeCommand).toHaveBeenCalledWith(['git', 'init', '--bare'], expect.any(Object))
+    expect(executeCommand).toHaveBeenCalledWith(['git', '-C', expect.any(String), 'symbolic-ref', 'HEAD', 'refs/heads/develop'])
     expect(result.defaultBranch).toBe('develop')
   })
 
