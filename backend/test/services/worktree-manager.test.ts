@@ -116,8 +116,9 @@ describe('WorktreeManager', () => {
         '/workspace/repos/repo-1',
         'worktree',
         'add',
-        '/workspace/workspace/session-2/repo-1',
+        '-b',
         'new-branch',
+        '/workspace/workspace/session-2/repo-1',
       ])
     )
   })

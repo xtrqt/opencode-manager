@@ -50,13 +50,11 @@ export class WorktreeManager {
       if (!baseRefExists) {
         const fallbackBranch = await this.getDefaultBranch(repoBasePath)
         if (fallbackBranch && fallbackBranch !== targetBranch) {
-          targetBranch = fallbackBranch
-          baseRef = await this.resolveBaseRef(repoBasePath, targetBranch)
+          baseRef = await this.resolveBaseRef(repoBasePath, fallbackBranch)
         } else {
           const currentBranch = await this.getCurrentBranch(repoBasePath)
           if (currentBranch && currentBranch !== targetBranch) {
-            targetBranch = currentBranch
-            baseRef = await this.resolveBaseRef(repoBasePath, targetBranch)
+            baseRef = await this.resolveBaseRef(repoBasePath, currentBranch)
           }
         }
       }
@@ -65,12 +63,10 @@ export class WorktreeManager {
         ? this.buildWorktreeBranchName(sessionName, targetBranch)
         : targetBranch
 
-      if (isCheckedOut) {
+      const shouldCreateBranch = !baseRefExists
+      if (isCheckedOut || shouldCreateBranch || baseRef.startsWith('origin/')) {
         await this.runGit(repoBasePath, ['worktree', 'add', '-b', worktreeBranch, worktreePath, baseRef])
         logger.info(`Created worktree at ${worktreePath} with new branch ${worktreeBranch}`)
-      } else if (baseRef.startsWith('origin/')) {
-        await this.runGit(repoBasePath, ['worktree', 'add', '-b', worktreeBranch, worktreePath, baseRef])
-        logger.info(`Created worktree at ${worktreePath} with tracking branch ${worktreeBranch}`)
       } else {
         await this.runGit(repoBasePath, ['worktree', 'add', worktreePath, worktreeBranch])
         logger.info(`Created worktree at ${worktreePath} with existing branch ${worktreeBranch}`)
