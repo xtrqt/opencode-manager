@@ -69,7 +69,7 @@ export function SessionManagerCard({
         return
       }
       navigate(`/workspace/${session.id}/sessions/${created.id}`)
-    } catch (error) {
+    } catch {
       showToast.error('Failed to open OpenCode')
     }
   }

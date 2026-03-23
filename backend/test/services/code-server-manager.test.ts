@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CodeServerManager } from '../../src/services/code-server-manager'
-import type { DevcontainerTemplate, Session } from '@opencode-manager/shared'
+import type { DevcontainerTemplate, SessionData } from '@opencode-manager/shared'
 import { mkdir, writeFile, chmod } from 'fs/promises'
 
 vi.mock('fs/promises', () => ({
@@ -11,7 +11,7 @@ vi.mock('fs/promises', () => ({
 
 describe('CodeServerManager', () => {
   let manager: CodeServerManager
-  let session: Session
+  let session: SessionData
   let template: DevcontainerTemplate
 
   beforeEach(() => {

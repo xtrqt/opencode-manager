@@ -17,8 +17,12 @@ export class ImageBuilder {
   async imageExists(imageTag: string): Promise<boolean> {
     const result = await execCommand(
       ['docker', 'image', 'inspect', imageTag],
-      { ignoreExitCode: true, silent: true }
-    ) as { exitCode: number }
+      { ignoreExitCode: true as const, silent: true }
+    ) as string | { exitCode: number; stdout: string; stderr: string }
+
+    if (typeof result === 'string') {
+      return true
+    }
 
     return result.exitCode === 0
   }

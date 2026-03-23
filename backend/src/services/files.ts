@@ -261,7 +261,7 @@ function getWorkspaceRootName(userPath: string): string | null {
   const normalized = userPath.replace(/\\/g, '/')
   const parts = normalized.split('/').filter(Boolean)
   if (parts.length >= 2 && parts[0] === 'workspace') {
-    return parts[1]
+    return parts[1] || null
   }
   return null
 }
@@ -270,7 +270,8 @@ function isInternalWorkspacePath(userPath: string): boolean {
   const normalized = userPath.replace(/\\/g, '/')
   const parts = normalized.split('/').filter(Boolean)
   if (parts.length >= 3 && parts[0] === 'workspace') {
-    return INTERNAL_WORKSPACE_DIRS.has(parts[2])
+    const target = parts[2]
+    return !!target && INTERNAL_WORKSPACE_DIRS.has(target)
   }
   return false
 }

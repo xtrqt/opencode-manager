@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { WorktreeManager } from '../../src/services/worktree-manager'
 import type { Repo } from '../../src/types/repo'
 import { execCommand } from '../../src/utils/process'
-import { mkdir, writeFile, readFile, access, symlink } from 'fs/promises'
+import { mkdir, readFile, access, symlink } from 'fs/promises'
 
 vi.mock('../../src/utils/process', () => ({
   execCommand: vi.fn(),

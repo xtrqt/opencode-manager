@@ -1,5 +1,5 @@
 import type { Database } from 'bun:sqlite'
-import type { DevcontainerChanges, DevcontainerUpdateRequest } from '@opencode-manager/shared'
+import type { DevcontainerChanges, DevcontainerUpdateRequest, DevcontainerConfig } from '@opencode-manager/shared'
 import { DevcontainerManager } from './devcontainer-manager'
 import { SessionManager } from './session-manager'
 import * as db from '../db/queries-session'
@@ -72,12 +72,9 @@ export class DevcontainerRequestManager {
 
     const updatedConfig = this.applyChanges(baseTemplate.config, request.changes)
     const action = request.action || (baseTemplate.isBuiltIn ? 'fork' : 'modify')
-    let finalTemplateName = baseTemplateName
-
     if (action === 'fork') {
       const forkName = this.generateForkName(baseTemplateName, session.name, id)
       await this.devcontainerManager.createTemplate(forkName, updatedConfig, baseTemplateName)
-      finalTemplateName = forkName
       db.updateSessionDevcontainerTemplate(this.db, session.id, forkName)
     } else {
       await this.devcontainerManager.updateTemplate(baseTemplateName, updatedConfig)
@@ -91,8 +88,8 @@ export class DevcontainerRequestManager {
     return { ...request, status: 'applied' }
   }
 
-  private applyChanges(base: any, changes: DevcontainerChanges) {
-    const updated = JSON.parse(JSON.stringify(base))
+  private applyChanges(base: DevcontainerConfig, changes: DevcontainerChanges): DevcontainerConfig {
+    const updated = JSON.parse(JSON.stringify(base)) as DevcontainerConfig
 
     const nixPackages = (updated.build?.args?.NIX_PACKAGES || '').split(' ').filter(Boolean)
     const nixSet = new Set(nixPackages)
@@ -135,7 +132,17 @@ export class DevcontainerRequestManager {
     return raw.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').slice(0, 63)
   }
 
-  private mapRow(row: any): DevcontainerUpdateRequest & { id: number } {
+  private mapRow(row: {
+    id: number
+    session_id: string
+    template_name: string | null
+    requested_by: string
+    changes: string
+    reason: string | null
+    action: string | null
+    status: string
+    created_at: number
+  }): DevcontainerUpdateRequest & { id: number } {
     return {
       id: row.id,
       sessionId: row.session_id,
@@ -143,8 +150,8 @@ export class DevcontainerRequestManager {
       requestedBy: row.requested_by,
       changes: JSON.parse(row.changes),
       reason: row.reason || undefined,
-      action: row.action || undefined,
-      status: row.status,
+      action: (row.action || undefined) as DevcontainerUpdateRequest['action'],
+      status: row.status as DevcontainerUpdateRequest['status'],
       createdAt: row.created_at,
     }
   }

@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite'
-import type { 
-  Session, 
-  SessionStatus, 
+import type {
+  SessionData,
+  SessionStatus,
   CreateSessionInput,
   RepoMapping,
   SessionDetail,
@@ -48,7 +48,7 @@ export class SessionManager {
     this.traefikManager = traefikManager || new TraefikManager()
   }
 
-  async createSession(input: CreateSessionInput): Promise<Session> {
+  async createSession(input: CreateSessionInput): Promise<SessionData> {
     const sessionId = randomUUID()
     const sanitizedName = this.sanitizeSessionName(input.name)
     
@@ -66,7 +66,7 @@ export class SessionManager {
 
     const configHash = this.devcontainerManager.calculateConfigHash(template.config)
 
-    const session: Session = {
+    const session: SessionData = {
       id: sessionId,
       name: sanitizedName,
       repoMappings: [],
@@ -134,7 +134,7 @@ export class SessionManager {
     }
   }
 
-  async getSession(sessionId: string): Promise<Session | null> {
+  async getSession(sessionId: string): Promise<SessionData | null> {
     return db.getSessionById(this.db, sessionId)
   }
 
@@ -161,11 +161,11 @@ export class SessionManager {
     }
   }
 
-  async getSessionByName(name: string): Promise<Session | null> {
+  async getSessionByName(name: string): Promise<SessionData | null> {
     return db.getSessionByName(this.db, name)
   }
 
-  async listSessions(filters?: { status?: SessionStatus }): Promise<Session[]> {
+  async listSessions(filters?: { status?: SessionStatus }): Promise<SessionData[]> {
     if (filters?.status) {
       return db.getSessionsByStatus(this.db, filters.status)
     }
@@ -197,7 +197,7 @@ export class SessionManager {
     return details
   }
 
-  async setPublicAccess(sessionId: string, enabled: boolean): Promise<Session | null> {
+  async setPublicAccess(sessionId: string, enabled: boolean): Promise<SessionData | null> {
     const session = await this.getSession(sessionId)
     if (!session) {
       return null
@@ -370,7 +370,7 @@ export class SessionManager {
     logger.info(`Session ${sessionId} deleted from database`)
   }
 
-  private async createSessionDirectories(session: Session): Promise<void> {
+  private async createSessionDirectories(session: SessionData): Promise<void> {
     await mkdir(session.sessionPath, { recursive: true })
     await mkdir(session.opencodeStatePath, { recursive: true })
     await mkdir(session.dindDataPath, { recursive: true })

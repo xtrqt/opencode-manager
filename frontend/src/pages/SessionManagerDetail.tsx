@@ -58,7 +58,7 @@ export function SessionManagerDetail() {
         return
       }
       navigate(`/workspace/${session.id}/sessions/${created.id as string}`)
-    } catch (error) {
+    } catch {
       showToast.error('Failed to open OpenCode')
     }
   }
@@ -97,7 +97,6 @@ export function SessionManagerDetail() {
   }
 
   const isRunning = session.status === 'running'
-  const isStopped = session.status === 'stopped'
   const isStarting = session.status === 'building' || session.status === 'creating'
 
   return (

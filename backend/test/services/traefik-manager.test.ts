@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { TraefikManager } from '../../src/services/traefik-manager'
-import type { Session } from '@opencode-manager/shared'
+import type { SessionData } from '@opencode-manager/shared'
 import { mkdir, writeFile, chmod } from 'fs/promises'
 import { execCommand } from '../../src/utils/process'
 
@@ -29,10 +29,10 @@ describe('TraefikManager', () => {
   it('should write config and start container', async () => {
     vi.mocked(execCommand).mockImplementation(async (args: string[]) => {
       if (args[0] === 'docker' && args[1] === 'network') {
-        return { exitCode: 0, stdout: '' }
+        return { exitCode: 0, stdout: '', stderr: '' }
       }
       if (args[0] === 'docker' && args[1] === 'ps') {
-        return { exitCode: 0, stdout: '' }
+        return { exitCode: 0, stdout: '', stderr: '' }
       }
       return ''
     })
@@ -48,7 +48,7 @@ describe('TraefikManager', () => {
   })
 
   it('should generate dynamic routes for public sessions', async () => {
-    const sessions: Session[] = [
+    const sessions: SessionData[] = [
       {
         id: 'session-1',
         name: 'session-1',

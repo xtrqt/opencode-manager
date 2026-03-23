@@ -32,9 +32,12 @@ export class WorktreeManager {
       await mkdir(path.dirname(worktreePath), { recursive: true })
       logger.info(`Created shared directory: ${sharedPath}`)
 
-      let targetBranch = branch || repo.defaultBranch
+      let targetBranch = branch || repo.defaultBranch || ''
       if (!targetBranch) {
-        targetBranch = await this.getDefaultBranch(repoBasePath)
+        const defaultBranch = await this.getDefaultBranch(repoBasePath)
+        if (defaultBranch) {
+          targetBranch = defaultBranch
+        }
       }
       if (!targetBranch) {
         targetBranch = 'main'
@@ -73,7 +76,7 @@ export class WorktreeManager {
         logger.info(`Created worktree at ${worktreePath} with existing branch ${worktreeBranch}`)
       }
 
-      await this.ensureWorktreelinksConfig(repoBasePath, sessionName)
+      await this.ensureWorktreelinksConfig(repoBasePath)
 
       await this.linkDependencies(repoBasePath, sessionName)
 
@@ -229,7 +232,7 @@ export class WorktreeManager {
     }
   }
 
-  private async ensureWorktreelinksConfig(repoPath: string, sessionName: string): Promise<void> {
+  private async ensureWorktreelinksConfig(repoPath: string): Promise<void> {
     const worktreelinksPath = path.join(repoPath, '.worktreelinks')
     
     try {
@@ -321,7 +324,7 @@ export class WorktreeManager {
     }
   }
 
-  async listWorktrees(repo: Repository): Promise<Array<{ path: string; branch: string }>> {
+  async listWorktrees(repo: Repo): Promise<Array<{ path: string; branch: string }>> {
     const repoBasePath = path.join(REPOS_BASE_PATH, repo.localPath)
 
     try {

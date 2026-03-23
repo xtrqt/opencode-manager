@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vites
 import type { Database } from 'bun:sqlite'
 import { createSessionRoutes } from '../../src/routes/sessions'
 import { getSessionById, getAllSessions, updateSessionPublicOpencodeUrl } from '../../src/db/queries-session'
+import { GitAuthService } from '../../src/services/git-auth'
+import type { SessionData, SessionStatus } from '@opencode-manager/shared'
 
 vi.mock('bun:sqlite', () => ({
   Database: vi.fn(),
@@ -48,10 +50,10 @@ const getSessionByIdMock = getSessionById as MockedFunction<typeof getSessionByI
 const getAllSessionsMock = getAllSessions as MockedFunction<typeof getAllSessions>
 const updatePublicUrlMock = updateSessionPublicOpencodeUrl as MockedFunction<typeof updateSessionPublicOpencodeUrl>
 
-const buildSession = () => ({
+const buildSession = (): SessionData => ({
   id: 'session-1',
   name: 'session-1',
-  status: 'stopped',
+  status: 'stopped' as SessionStatus,
   repoMappings: [],
   opencodeContainerId: null,
   dindContainerId: null,
@@ -90,7 +92,7 @@ describe('Session Routes', () => {
       inTransaction: vi.fn(),
       close: vi.fn(),
     } as unknown as Database
-    app = createSessionRoutes(mockDatabase)
+    app = createSessionRoutes(mockDatabase, new GitAuthService())
   })
 
   describe('GET /:id', () => {

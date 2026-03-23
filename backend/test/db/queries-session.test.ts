@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { Database } from 'bun:sqlite'
 import { initializeDatabase } from '../../src/db/schema'
 import * as db from '../../src/db/queries'
-import type { Session, DevcontainerTemplate, DevcontainerConfig } from '@opencode-manager/shared'
+import type { SessionData, DevcontainerTemplate, DevcontainerConfig } from '@opencode-manager/shared'
+
+type Session = SessionData
 
 describe('Session Database Queries', () => {
   let database: Database
@@ -13,7 +15,7 @@ describe('Session Database Queries', () => {
 
   describe('Session CRUD', () => {
     it('should create a session', () => {
-      const session: Session = {
+      const session: SessionData = {
         id: 'test-session-1',
         name: 'test-session',
         repoMappings: [],
@@ -41,7 +43,7 @@ describe('Session Database Queries', () => {
     })
 
     it('should get session by id', () => {
-      const session: Session = {
+      const session: SessionData = {
         id: 'test-session-2',
         name: 'test-session-2',
         repoMappings: [],

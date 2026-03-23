@@ -284,6 +284,7 @@ export async function cloneRepo(
   useWorktree: boolean = false,
   skipSSHVerification: boolean = false
 ): Promise<Repo> {
+  void useWorktree
   const effectiveUrl = normalizeSSHUrl(repoUrl)
   const isSSH = isSSHUrl(effectiveUrl)
   const preserveSSH = isSSH
@@ -547,38 +548,5 @@ function normalizeRepoUrl(url: string, preserveSSH: boolean = false): { url: str
   return {
     url,
     name: `repo-${Date.now()}`
-  }
-}
-
-async function createWorktreeSafely(baseRepoPath: string, worktreePath: string, branch: string, env: Record<string, string>): Promise<void> {
-  const currentBranch = await safeGetCurrentBranch(baseRepoPath, env)
-  if (currentBranch === branch) {
-    const defaultBranch = await executeCommand(['git', '-C', baseRepoPath, 'rev-parse', '--abbrev-ref', 'origin/HEAD'], { env })
-      .then(ref => ref.trim().replace('origin/', ''))
-      .catch(() => 'main')
-
-    await executeCommand(['git', '-C', baseRepoPath, 'checkout', defaultBranch], { env })
-      .catch(() => executeCommand(['git', '-C', baseRepoPath, 'checkout', 'main'], { env }))
-  }
-
-  await executeCommand(['git', '-C', baseRepoPath, 'worktree', 'prune'], { env }).catch(() => {})
-
-  let branchExists = false
-  try {
-    await executeCommand(['git', '-C', baseRepoPath, 'rev-parse', '--verify', `refs/heads/${branch}`], { env, silent: true })
-    branchExists = true
-  } catch {
-    try {
-      await executeCommand(['git', '-C', baseRepoPath, 'rev-parse', '--verify', `refs/remotes/origin/${branch}`], { env, silent: true })
-      branchExists = true
-    } catch {
-      branchExists = false
-    }
-  }
-
-  if (branchExists) {
-    await executeCommand(['git', '-C', baseRepoPath, 'worktree', 'add', worktreePath, branch], { env })
-  } else {
-    await executeCommand(['git', '-C', baseRepoPath, 'worktree', 'add', '-b', branch, worktreePath], { env })
   }
 }

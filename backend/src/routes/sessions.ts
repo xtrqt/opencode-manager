@@ -4,7 +4,7 @@ import { SessionManager } from '../services/session-manager'
 import { DockerOrchestrator } from '../services/docker-orchestrator'
 import { DevcontainerManager } from '../services/devcontainer-manager'
 import { DevcontainerRequestManager } from '../services/devcontainer-request-manager'
-import type { CreateSessionInput } from '@opencode-manager/shared'
+import type { CreateSessionInput, SessionStatus, DevcontainerChanges } from '@opencode-manager/shared'
 import { logger } from '../utils/logger'
 import { proxyRequestToTarget } from '../services/proxy'
 import { GitService } from '../services/git/GitService'
@@ -44,7 +44,7 @@ export function createSessionRoutes(db: Database, gitAuthService: GitAuthService
       const status = c.req.query('status')
       
       const sessions = await sessionManager.listSessionDetails(
-        status ? { status: status as any } : undefined
+        status ? { status: status as SessionStatus } : undefined
       )
       
       return c.json(sessions)
@@ -141,7 +141,10 @@ export function createSessionRoutes(db: Database, gitAuthService: GitAuthService
         return c.json({ error: 'Failed to create OpenCode session', message: text }, 502)
       }
 
-      const created = await createResponse.json()
+      const created = await createResponse.json() as { id?: string }
+      if (!created.id) {
+        return c.json({ error: 'Failed to create OpenCode session', message: 'Missing session id' }, 502)
+      }
       const nextMetadata = { ...(session.metadata || {}), opencodeSessionId: created.id }
       await sessionManager.updateSessionMetadata(session.id, nextMetadata)
 
@@ -249,7 +252,7 @@ export function createSessionRoutes(db: Database, gitAuthService: GitAuthService
         sessionId: id,
         templateName: body.templateName,
         requestedBy: body.requestedBy,
-        changes: body.changes as any,
+        changes: body.changes as DevcontainerChanges,
         reason: body.reason,
         action: body.action,
       })

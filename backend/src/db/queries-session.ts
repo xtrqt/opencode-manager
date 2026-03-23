@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite'
-import type { 
-  Session, 
-  SessionStatus, 
+import type {
+  SessionData,
+  SessionStatus,
   RepoMapping,
   DevcontainerTemplate,
   DevcontainerConfig,
@@ -71,7 +71,7 @@ interface DevcontainerRequestRow {
   created_at: number
 }
 
-function rowToSession(row: SessionRow, repoMappings: RepoMapping[]): Session {
+function rowToSession(row: SessionRow, repoMappings: RepoMapping[]): SessionData {
   return {
     id: row.id,
     name: row.name,
@@ -109,7 +109,7 @@ function rowToDevcontainerTemplate(row: DevcontainerTemplateRow): DevcontainerTe
   }
 }
 
-export function createSession(db: Database, session: Session): Session {
+export function createSession(db: Database, session: SessionData): SessionData {
   db.prepare(`
     INSERT INTO sessions (
       id, name, status,
@@ -160,7 +160,7 @@ export function createSession(db: Database, session: Session): Session {
   return session
 }
 
-export function getSessionById(db: Database, sessionId: string): Session | null {
+export function getSessionById(db: Database, sessionId: string): SessionData | null {
   const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId) as SessionRow | undefined
   if (!row) return null
 
@@ -177,7 +177,7 @@ export function getSessionById(db: Database, sessionId: string): Session | null 
   return rowToSession(row, repoMappings)
 }
 
-export function getSessionByName(db: Database, name: string): Session | null {
+export function getSessionByName(db: Database, name: string): SessionData | null {
   const row = db.prepare('SELECT * FROM sessions WHERE name = ?').get(name) as SessionRow | undefined
   if (!row) return null
 
@@ -194,7 +194,7 @@ export function getSessionByName(db: Database, name: string): Session | null {
   return rowToSession(row, repoMappings)
 }
 
-export function getAllSessions(db: Database): Session[] {
+export function getAllSessions(db: Database): SessionData[] {
   const rows = db.prepare('SELECT * FROM sessions ORDER BY last_active_at DESC').all() as SessionRow[]
   
   return rows.map(row => {
@@ -211,7 +211,7 @@ export function getAllSessions(db: Database): Session[] {
   })
 }
 
-export function getSessionsByStatus(db: Database, status: SessionStatus): Session[] {
+export function getSessionsByStatus(db: Database, status: SessionStatus): SessionData[] {
   const rows = db.prepare('SELECT * FROM sessions WHERE status = ? ORDER BY last_active_at DESC').all(status) as SessionRow[]
   
   return rows.map(row => {
@@ -308,7 +308,7 @@ export function updateSessionContainerIds(
   }
 ): void {
   const updates: string[] = []
-  const values: any[] = []
+  const values: Array<string | number | null> = []
 
   if (containerIds.opencode !== undefined) {
     updates.push('opencode_container_id = ?')
@@ -373,7 +373,7 @@ export function deleteDevcontainerTemplate(db: Database, name: string): void {
   db.prepare('DELETE FROM devcontainer_templates WHERE name = ?').run(name)
 }
 
-export function getSessionsByTemplate(db: Database, templateName: string): Session[] {
+export function getSessionsByTemplate(db: Database, templateName: string): SessionData[] {
   const rows = db.prepare('SELECT * FROM sessions WHERE devcontainer_template = ?').all(templateName) as SessionRow[]
   
   return rows.map(row => {

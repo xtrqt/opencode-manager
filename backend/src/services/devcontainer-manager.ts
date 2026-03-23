@@ -136,18 +136,20 @@ Templates are automatically version-controlled with git.
   }
 
   calculateConfigHash(config: DevcontainerConfig): string {
+    const buildArgs = config.build?.args || {}
+    const containerEnv = config.containerEnv || {}
     const normalized = {
       name: config.name,
       build: {
-        args: Object.keys(config.build.args).sort().reduce((acc, key) => {
-          acc[key] = config.build.args[key]
+        args: Object.keys(buildArgs).sort().reduce((acc, key) => {
+          acc[key] = buildArgs[key] ?? ''
           return acc
         }, {} as Record<string, string>)
       },
-      containerEnv: config.containerEnv ? Object.keys(config.containerEnv).sort().reduce((acc, key) => {
-        acc[key] = config.containerEnv![key]
+      containerEnv: Object.keys(containerEnv).sort().reduce((acc, key) => {
+        acc[key] = containerEnv[key] ?? ''
         return acc
-      }, {} as Record<string, string>) : {},
+      }, {} as Record<string, string>),
     }
 
     const hash = createHash('sha256')

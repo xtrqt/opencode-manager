@@ -1,10 +1,10 @@
-import type { DevcontainerTemplate, Session } from '@opencode-manager/shared'
+import type { DevcontainerTemplate, SessionData } from '@opencode-manager/shared'
 import { mkdir, writeFile, chmod } from 'fs/promises'
 import path from 'path'
 import { getContainerWorkspacesPath } from '@opencode-manager/shared/config/env'
 
 export class CodeServerManager {
-  async prepareSession(session: Session, template: DevcontainerTemplate): Promise<void> {
+  async prepareSession(session: SessionData, template: DevcontainerTemplate): Promise<void> {
     await mkdir(session.codeServerConfigPath, { recursive: true })
 
     const extensions = template.config.customizations?.vscode?.extensions || []

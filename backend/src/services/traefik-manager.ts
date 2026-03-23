@@ -1,4 +1,4 @@
-import type { Session } from '@opencode-manager/shared'
+import type { SessionData } from '@opencode-manager/shared'
 import { mkdir, writeFile, chmod } from 'fs/promises'
 import path from 'path'
 import { execCommand } from '../utils/process'
@@ -22,7 +22,7 @@ export class TraefikManager {
     await this.ensureContainer()
   }
 
-  async syncRoutes(sessions: Session[]): Promise<void> {
+  async syncRoutes(sessions: SessionData[]): Promise<void> {
     await this.ensureConfigFiles()
     const publicDomain = process.env.PUBLIC_DOMAIN || 'localhost'
     const enableTls = process.env.TRAEFIK_ENABLE_TLS === 'true' || publicDomain !== 'localhost'
@@ -128,10 +128,13 @@ export class TraefikManager {
   private async ensureNetwork(): Promise<void> {
     const result = await execCommand(
       ['docker', 'network', 'ls', '--filter', `name=${NETWORK_NAME}`, '--format', '{{.Name}}'],
-      { ignoreExitCode: true, silent: true }
-    ) as { exitCode: number; stdout: string }
+      { ignoreExitCode: true as const, silent: true }
+    ) as string | { exitCode: number; stdout: string; stderr: string }
 
-    if (result.exitCode === 0 && result.stdout.trim().split('\n').includes(NETWORK_NAME)) {
+    const networkOutput = typeof result === 'string' ? result : result.stdout
+    const networkExitCode = typeof result === 'string' ? 0 : result.exitCode
+
+    if (networkExitCode === 0 && networkOutput.trim().split('\n').includes(NETWORK_NAME)) {
       return
     }
 
@@ -141,16 +144,18 @@ export class TraefikManager {
   private async ensureContainer(): Promise<void> {
     const existing = await execCommand(
       ['docker', 'ps', '-a', '--filter', `name=${TRAEFIK_CONTAINER}`, '--format', '{{.Names}}'],
-      { ignoreExitCode: true, silent: true }
-    ) as { exitCode: number; stdout: string }
+      { ignoreExitCode: true as const, silent: true }
+    ) as string | { exitCode: number; stdout: string; stderr: string }
 
-    const names = existing.stdout.trim().split('\n').filter(Boolean)
+    const existingNames = typeof existing === 'string' ? existing : existing.stdout
+    const names = existingNames.trim().split('\n').filter(Boolean)
     if (names.includes(TRAEFIK_CONTAINER)) {
       const running = await execCommand(
         ['docker', 'ps', '--filter', `name=${TRAEFIK_CONTAINER}`, '--format', '{{.Names}}'],
-        { ignoreExitCode: true, silent: true }
-      ) as { exitCode: number; stdout: string }
-      if (running.stdout.trim().split('\n').includes(TRAEFIK_CONTAINER)) {
+        { ignoreExitCode: true as const, silent: true }
+      ) as string | { exitCode: number; stdout: string; stderr: string }
+      const runningNames = typeof running === 'string' ? running : running.stdout
+      if (runningNames.trim().split('\n').includes(TRAEFIK_CONTAINER)) {
         return
       }
       await execCommand(['docker', 'start', TRAEFIK_CONTAINER])

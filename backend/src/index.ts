@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { Hono, type Context, type Next } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from '@hono/node-server/serve-static'
 import os from 'os'
@@ -81,13 +81,15 @@ app.use('/*', cors({
 
 const db = initializeDatabase(DB_PATH)
 const auth = createAuth(db)
-const requireAuth = ENV.AUTH.DISABLED ? async (_c, next) => next() : createAuthMiddleware(auth)
+const requireAuth = ENV.AUTH.DISABLED
+  ? async (_c: Context, next: Next) => next()
+  : createAuthMiddleware(auth)
 
 import { DEFAULT_AGENTS_MD } from './constants'
 
 let ipcServer: IPCServer | undefined
 const gitAuthService = new GitAuthService()
-let devcontainerManager: DevcontainerManager
+const devcontainerManager = new DevcontainerManager(db)
 
 async function ensureDefaultConfigExists(): Promise<void> {
   const settingsService = new SettingsService(db)
@@ -219,7 +221,6 @@ try {
   await dockerOrchestrator.ensureNetwork()
   logger.info('Docker network initialized')
 
-  devcontainerManager = new DevcontainerManager(db)
   await devcontainerManager.initialize()
   logger.info('Devcontainer templates initialized')
 
