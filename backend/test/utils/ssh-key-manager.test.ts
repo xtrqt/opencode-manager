@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import * as fs from 'fs/promises'
+
+vi.mock('@opencode-manager/shared/config/env', () => ({
+  getWorkspacePath: () => '/tmp/opencode-test',
+}))
+
 import { parseSSHHost, normalizeHostPort, parseHostPort, writeTemporarySSHKey, cleanupSSHKey, cleanupAllSSHKeys } from '../../src/utils/ssh-key-manager'
 
 describe('SSH Host Parsing', () => {

@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { Hono, type Context, type Next } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from '@hono/node-server/serve-static'
 import os from 'os'
@@ -37,6 +37,10 @@ import { createAuthRoutes, createAuthInfoRoutes, syncAdminFromEnv } from './rout
 import { createAuth } from './auth'
 import { createAuthMiddleware } from './auth/middleware'
 import { sseAggregator } from './services/sse-aggregator'
+import { createSessionRoutes } from './routes/sessions'
+import { DockerOrchestrator } from './services/docker-orchestrator'
+import { DevcontainerManager } from './services/devcontainer-manager'
+import { createDevcontainerRoutes } from './routes/devcontainers'
 import { ensureDirectoryExists, writeFileContent, fileExists, readFileContent } from './services/file-operations'
 import { SettingsService } from './services/settings'
 import { opencodeServerManager } from './services/opencode-single-server'
@@ -47,6 +51,8 @@ import { logger } from './utils/logger'
 import { 
   getWorkspacePath, 
   getReposPath, 
+  getWorkspacesPath,
+  getSharedPath,
   getConfigPath,
   getOpenCodeConfigFilePath,
   getAgentsMdPath,
@@ -75,12 +81,15 @@ app.use('/*', cors({
 
 const db = initializeDatabase(DB_PATH)
 const auth = createAuth(db)
-const requireAuth = createAuthMiddleware(auth)
+const requireAuth = ENV.AUTH.DISABLED
+  ? async (_c: Context, next: Next) => next()
+  : createAuthMiddleware(auth)
 
 import { DEFAULT_AGENTS_MD } from './constants'
 
 let ipcServer: IPCServer | undefined
 const gitAuthService = new GitAuthService()
+const devcontainerManager = new DevcontainerManager(db)
 
 async function ensureDefaultConfigExists(): Promise<void> {
   const settingsService = new SettingsService(db)
@@ -191,6 +200,8 @@ try {
 
   await ensureDirectoryExists(getWorkspacePath())
   await ensureDirectoryExists(getReposPath())
+  await ensureDirectoryExists(getWorkspacesPath())
+  await ensureDirectoryExists(getSharedPath())
   await ensureDirectoryExists(getConfigPath())
   logger.info('Workspace directories initialized')
 
@@ -206,11 +217,20 @@ try {
   await gitAuthService.initialize(ipcServer, db)
   logger.info(`Git IPC server running at ${ipcServer.ipcHandlePath}`)
 
+  const dockerOrchestrator = new DockerOrchestrator()
+  await dockerOrchestrator.ensureNetwork()
+  logger.info('Docker network initialized')
+
+  await devcontainerManager.initialize()
+  logger.info('Devcontainer templates initialized')
+
   opencodeServerManager.setDatabase(db)
   await opencodeServerManager.start()
   logger.info(`OpenCode server running on port ${opencodeServerManager.getPort()}`)
 
-  await syncAdminFromEnv(auth, db)
+  if (!ENV.AUTH.DISABLED) {
+    await syncAdminFromEnv(auth, db)
+  }
 } catch (error) {
   logger.error('Failed to initialize workspace:', error)
 }
@@ -246,6 +266,8 @@ protectedApi.use('/*', requireAuth)
 
 protectedApi.route('/health', createHealthRoutes(db))
 protectedApi.route('/repos', createRepoRoutes(db, gitAuthService))
+protectedApi.route('/sessions', createSessionRoutes(db, gitAuthService))
+protectedApi.route('/devcontainers', createDevcontainerRoutes(db, devcontainerManager))
 protectedApi.route('/settings', createSettingsRoutes(db))
 protectedApi.route('/files', createFileRoutes())
 protectedApi.route('/providers', createProvidersRoutes())
