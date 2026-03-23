@@ -37,7 +37,7 @@ export function SessionManager() {
 
       <div className="flex-1 flex flex-col min-h-0">
         <WorkspaceList
-          onSelectWorkspace={(id) => navigate(`/workspace/${id}`)}
+          onSelectWorkspace={(id: string) => navigate(`/workspace/${id}`)}
         />
       </div>
 
