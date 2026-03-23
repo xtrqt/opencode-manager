@@ -1,6 +1,11 @@
 name: Docker Build
 
 on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/**
   release:
     types: [published]
 
@@ -33,7 +38,9 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=sha
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
