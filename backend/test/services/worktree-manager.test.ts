@@ -116,9 +116,8 @@ describe('WorktreeManager', () => {
         '/workspace/repos/repo-1',
         'worktree',
         'add',
-        '-b',
-        'new-branch',
         '/workspace/workspace/session-2/repo-1',
+        'new-branch',
       ])
     )
   })
@@ -129,14 +128,14 @@ describe('WorktreeManager', () => {
     await manager.removeWorktree('repo-1', 'session-1')
 
     expect(execCommand).toHaveBeenCalledWith([
-      'git', '-C', '/workspace/repos/repo-1',
-      'worktree', 'remove', '--force', 'session-1',
+      'git', '--git-dir', '/workspace/repos/repo-1',
+      'worktree', 'remove', '--force', '/workspace/workspace/session-1/repo-1',
     ])
     expect(execCommand).toHaveBeenCalledWith([
       'rm', '-rf', '/workspace/repos/repo-1/.shared/session-1',
     ])
     expect(execCommand).toHaveBeenCalledWith([
-      'git', '-C', '/workspace/repos/repo-1',
+      'git', '--git-dir', '/workspace/repos/repo-1',
       'worktree', 'prune',
     ])
   })
